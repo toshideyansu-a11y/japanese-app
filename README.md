@@ -13,3 +13,6 @@ SafariでGitHub PagesのURLを開き、共有ボタン →「ホーム画面に�
 - `data.js` 漢字と単語のデータ(内容を直すときはここ)
 - `app.js` 画面と復習の仕組み
 - `sw.js` オフライン用
+
+## クレジット
+漢字の書き順データ: [KanjiVG](https://kanjivg.tagaini.net) (c) Ulrich Apel, CC BY-SA 3.0
