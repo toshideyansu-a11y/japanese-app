@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>日本語 todo dia</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="日本語">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#fffaf0">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<style>
+:root {
+  --bg: #fffaf0; --fg: #2b2622; --muted: #7a6f66; --card: #ffffff; --line: #eadfce;
+  --red: #c8102e; --green: #009739; --blue: #2f6fd6; --yellow: #fedd00; --orange: #e08a00;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1b1916; --fg: #f1ebe3; --muted: #a89c90; --card: #26231f; --line: #3a352f; }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", system-ui, sans-serif;
+  padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 16px);
+}
+#app { max-width: 520px; margin: 0 auto; }
+button { font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer; }
+button.link { background: none; border: none; padding: 8px 0; color: var(--blue); }
+button.primary { background: var(--red); color: #fff; border: none; }
+button.big { width: 100%; padding: 18px; font-size: 1.15rem; font-weight: 700; margin: 12px 0; }
+button.danger { color: var(--red); }
+.top { display: flex; align-items: baseline; justify-content: space-between; padding: 14px 0 6px; }
+.top h1 { margin: 0; font-size: 1.6rem; }
+.top h1 span { font-size: 1rem; color: var(--muted); font-weight: 500; }
+.top.study span { color: var(--muted); font-size: .9rem; }
+.hero { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 6px; text-align: center; }
+.stat b { display: block; font-size: 1.8rem; }
+.stat small { color: var(--muted); }
+.done { text-align: center; background: var(--card); border-radius: 14px; padding: 20px; border: 1px solid var(--line); }
+.done small { color: var(--muted); }
+.card-list { margin: 18px 0; }
+.card-list h2, .form h2 { font-size: 1rem; margin: 18px 0 8px; }
+.card-list p { color: var(--muted); font-size: .9rem; margin: 6px 0; }
+.bar { height: 10px; background: var(--line); border-radius: 6px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--green); }
+.row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.row button { font-size: .9rem; padding: 12px 6px; }
+.tip { color: var(--muted); font-size: .85rem; line-height: 1.5; }
+.flash { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px 18px; margin: 8px 0; min-height: 280px; }
+.kind { color: var(--muted); font-size: .85rem; text-align: center; }
+.big-kanji { font-size: 7rem; text-align: center; line-height: 1.2; margin: 10px 0; }
+.flash .jp { font-size: 2.2rem; text-align: center; margin: 18px 0 6px; }
+.flash .pt { font-size: 1.6rem; text-align: center; margin: 26px 0; }
+.flash hr { border: none; border-top: 1px dashed var(--line); margin: 16px 0; }
+.meaning { font-size: 1.5rem; font-weight: 700; text-align: center; }
+.r { color: var(--muted); text-align: center; }
+.readings { display: flex; justify-content: center; gap: 16px; margin: 8px 0; color: var(--muted); }
+.hint { background: color-mix(in srgb, var(--yellow) 22%, transparent); border-radius: 10px; padding: 10px 12px; margin: 12px 0; font-size: .95rem; }
+.ex { list-style: none; padding: 0; margin: 10px 0 0; }
+.ex li { padding: 8px 0; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ex .r { text-align: left; }
+.say { padding: 6px 9px; border-radius: 50%; font-size: .9rem; }
+.sentence { display: flex; gap: 10px; align-items: flex-start; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+.jp-s { font-size: 1.1rem; }
+.pt-s { color: var(--muted); font-size: .9rem; margin-top: 4px; }
+.grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; }
+.g { padding: 14px 4px; font-weight: 700; color: #fff; border: none; }
+.g small { display: block; font-weight: 400; opacity: .85; font-size: .75rem; }
+.g1 { background: var(--red); } .g2 { background: var(--orange); } .g3 { background: var(--green); } .g4 { background: var(--blue); }
+.form label { display: block; margin: 12px 0; font-size: .9rem; color: var(--muted); }
+.form input, .form select { display: block; width: 100%; margin-top: 6px; padding: 12px; font-size: 1rem; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+.form button { display: block; width: 100%; margin: 8px 0; }
+.form .file input { border: 1px dashed var(--line); }
+.mine { list-style: none; padding: 0; }
+.mine li { padding: 8px 0; border-top: 1px solid var(--line); }
+.grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 10px 0; }
+.kc { font-size: 1.6rem; padding: 8px 2px; }
+.kc small { display: block; font-size: .6rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kc.seen { border-color: var(--blue); }
+.kc.ok { background: color-mix(in srgb, var(--green) 18%, var(--card)); border-color: var(--green); }
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
