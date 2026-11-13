@@ -10,17 +10,19 @@ if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
   const FLAG = "nihongo-audio-cached";
   const files = uniq(Object.values(AUDIO)).map(h => `audio/${h}.mp3`);
+  // assinatura das vozes atuais: se elas forem regravadas, o app baixa tudo de novo
+  const SIG = files.length + ":" + files.join("").split("").reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
   const cacheAudio = async () => {
-    if (!navigator.onLine || !("caches" in window) || localStorage.getItem(FLAG) === String(files.length)) return;
+    if (!navigator.onLine || !("caches" in window) || localStorage.getItem(FLAG) === SIG) return;
     try {
-      const cache = await caches.open("nihongo-audio-v1");
+      const cache = await caches.open("nihongo-audio-v2");
       const have = new Set((await cache.keys()).map(r => new URL(r.url).pathname.split("/").pop()));
       const todo = files.filter(f => !have.has(f.split("/").pop()));
       for (let i = 0; i < todo.length; i += 6) {
         if (document.hidden) return;
         await Promise.all(todo.slice(i, i + 6).map(f => fetch(f).then(r => (r.ok ? cache.put(f, r) : null)).catch(() => {})));
       }
-      localStorage.setItem(FLAG, String(files.length));
+      localStorage.setItem(FLAG, SIG);
     } catch (e) { /* tenta de novo na próxima vez */ }
   };
   setTimeout(cacheAudio, 6000);

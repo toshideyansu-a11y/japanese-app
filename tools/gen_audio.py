@@ -1,15 +1,19 @@
 """Gera os áudios (voz japonesa) do app com o modelo Kokoro-82M.
 
 Uso: python gen_audio.py manifest.json SAIDA_DIR [--dry]
-Precisa de: kokoro-q8.onnx, vozes (.bin), vocab (config.json) na pasta atual — ver README.
+Precisa de: kokoro-probe.onnx e kokoro-f0.onnx (feitos por make_f0_models.py), vozes (.bin) e
+vocab (config.json) na pasta do manifest — ver README.
 A leitura de cada frase vem das anotações do próprio app (furigana), então os
 kanji nunca são lidos errado: o analisador só é usado quando concorda com a leitura anotada.
+A melodia (acento tonal) vem do dicionário de acentos — ver accent.py.
 """
 import json, sys, re, hashlib, os, subprocess, unicodedata
 import numpy as np
 import jaconv
 from misaki import ja
 from misaki.ja import Word
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import accent
 
 g2p = ja.JAG2P()
 PUNCT = '。、！？!?,.…'
@@ -18,8 +22,9 @@ for row, v in [('あかさたなはまやらわがざだばぱぁゃ', 'a'), ('�
     for ch in row: VOW[ch] = v
 VK = {'a': 'あ', 'i': 'い', 'u': 'う', 'e': 'え', 'o': 'お'}
 
-def norm(kana):
-    """Forma canônica para comparar leituras (ignora diferenças de vogal longa e partículas)."""
+def norm(kana, strict=False):
+    """Forma canônica para comparar leituras (ignora diferenças de vogal longa e, se não for
+    strict, a diferença は/わ, へ/え das partículas)."""
     kana = jaconv.kata2hira(unicodedata.normalize('NFKC', kana))
     kana = re.sub(r'[\s。、！？!?,.…・「」〜~]', '', kana)
     out = []
@@ -29,7 +34,8 @@ def norm(kana):
         elif ch == 'う' and prev == 'o': ch = 'お'
         elif ch == 'い' and prev == 'e': ch = 'え'
         out.append(ch)
-    return ''.join(out).replace('は', 'わ').replace('へ', 'え').replace('を', 'お').replace('ぢ', 'じ').replace('づ', 'ず')
+    r = ''.join(out).replace('を', 'お').replace('ぢ', 'じ').replace('づ', 'ず')
+    return r if strict else r.replace('は', 'わ').replace('へ', 'え')
 
 EI_OK = ('きれい', 'せんせい', 'ていねい', 'とけい', 'えいが', 'がくせい')
 AA_OK = ('おかあさん', 'おばあさん', 'まあまあ')
@@ -99,7 +105,8 @@ def phonemize(tokens, log):
             for x in J: words.append(Word(tw[x].surface, tw[x].surface, 3))
             continue
         theirs = ''.join((tw[x].feature.pron or tw[x].feature.kana or tw[x].surface) for x in J)
-        if norm(mr) == norm(theirs):
+        said = ''.join(heur(mine[x][2]) for x in I)
+        if norm(said, True) == norm(theirs, True):
             for x in J:
                 w = tw[x]
                 words.append(Word(w.surface, jaconv.kata2hira(w.feature.pron or w.feature.kana or w.surface), 6 if w.char_type == 7 or not w.is_unk else w.char_type))
@@ -116,32 +123,48 @@ def phonemize(tokens, log):
 
 VOICE = {'a': 'jf_alpha', 'k': 'jm_kumo', 't': 'jf_gongitsune', 'y': 'jf_tebukuro'}
 SPEED = {'a': 0.9, 'k': 0.92, 't': 0.9, 'y': 0.92}
+# Altura (Hz) do "alto" de cada voz: escolhida para a melodia nova ficar no registro natural da voz.
+TOP = {'a': 318, 'k': 113, 't': 294, 'y': 415}
+VERSION = 'acento-1'
+
+def melody(it, log):
+    """Acento de um texto: (moras, notação legível) ou (None, '') se a análise falhar."""
+    n = len(log)
+    moras, alog = accent.analyze(split_punct(it['tokens']), norm, heur)
+    log.extend(alog)
+    if len(log) > n: log.insert(n, it['key'])
+    return moras, (accent.show(moras) if moras else '')
 
 def main():
     manifest = json.load(open(sys.argv[1], encoding='utf8'))
     outdir = sys.argv[2]
     dry = '--dry' in sys.argv
-    log, jobs = [], []
+    log, alog, jobs = [], [], []
     for it in manifest:
         n = len(log)
         ps = phonemize(it['tokens'], log)
         if len(log) > n: log.insert(n, it['key'])
-        jobs.append((it, ps))
-    print(f'{len(jobs)} textos; {sum(1 for l in log if not l.startswith("  "))} com leitura corrigida pela anotação')
-    print('\n'.join(log))
+        moras, shown = melody(it, alog)
+        if moras is not None and len(moras) != len(accent.mora_spans(ps)):
+            alog.append(f'{it["key"]}\n  acento: {len(moras)} moras no analisador, {len(accent.mora_spans(ps))} na fala; fica a melodia do modelo')
+            moras, shown = None, ''
+        jobs.append((it, ps, moras, shown))
+    print(f'{len(jobs)} textos; {sum(1 for l in log if not l.startswith("  "))} com leitura corrigida pela anotação; {sum(1 for j in jobs if j[2] is None)} sem acento do dicionário')
+    print('\n'.join(log + alog))
     if dry:
-        for it, ps in jobs[:: max(1, len(jobs) // 40)]: print(it['key'], '=>', ps)
+        for it, ps, moras, shown in jobs: print(it['key'], '=>', ps, '|', shown)
         return
     import onnxruntime as ort, soundfile as sf
     here = os.path.dirname(os.path.abspath(sys.argv[1]))
     vocab = json.load(open(os.path.join(here, 'kwheel/kokoro_onnx/config.json')))['vocab']
     so = ort.SessionOptions(); so.intra_op_num_threads = 4
-    sess = ort.InferenceSession(os.path.join(here, 'kokoro-q8.onnx'), so, providers=['CPUExecutionProvider'])
+    probe = ort.InferenceSession(os.path.join(here, 'kokoro-probe.onnx'), so, providers=['CPUExecutionProvider'])
+    forced = ort.InferenceSession(os.path.join(here, 'kokoro-f0.onnx'), so, providers=['CPUExecutionProvider'])
     voices = {k: np.fromfile(os.path.join(here, f'x/kokoro-js-1.2.1/package/voices/{v}.bin'), dtype=np.float32).reshape(-1, 1, 256) for k, v in VOICE.items()}
     os.makedirs(outdir, exist_ok=True)
     index, stats = {}, []
-    for n, (it, ps) in enumerate(jobs):
-        h = hashlib.md5((it['key'] + '\n' + ps).encode('utf8')).hexdigest()[:10]
+    for n, (it, ps, moras, shown) in enumerate(jobs):
+        h = hashlib.md5('\n'.join([it['key'], ps, shown, VERSION]).encode('utf8')).hexdigest()[:10]
         index[it['key']] = h
         mp3 = os.path.join(outdir, h + '.mp3')
         if os.path.exists(mp3): continue
@@ -149,7 +172,13 @@ def main():
         bad = [c for c in ps if c not in vocab]
         if bad: print('símbolo fora do vocabulário', it['key'], bad)
         v = it['voice']
-        a = sess.run(None, {'input_ids': np.array([[0, *ids, 0]], dtype=np.int64), 'style': voices[v][len(ids)], 'speed': np.array([SPEED[v]], dtype=np.float32)})[0].squeeze()
+        feed = {'input_ids': np.array([[0, *ids, 0]], dtype=np.int64), 'style': voices[v][len(ids)], 'speed': np.array([SPEED[v]], dtype=np.float32)}
+        a, f0, dur, _ = probe.run(None, feed)
+        if moras is not None:
+            # 2ª passada: a mesma fala, com a melodia do dicionário de acentos
+            f0n = accent.contour(f0[0], dur[0].astype(int), accent.mora_spans(ps), accent.levels(moras), TOP[v], accent.tails(moras))
+            a = forced.run(None, {**feed, 'f0_in': f0n[None]})[0]
+        a = a.squeeze()
         # corta o silêncio das pontas, normaliza o volume e suaviza início/fim
         env = np.abs(a); thr = max(env.max() * 0.02, 1e-4); idx = np.where(env > thr)[0]
         a = a[max(0, idx[0] - 1200): min(len(a), idx[-1] + 3600)]
@@ -162,6 +191,7 @@ def main():
         if n % 50 == 0: print(n, '/', len(jobs), flush=True)
     json.dump(index, open(os.path.join(outdir, 'index.json'), 'w', encoding='utf8'), ensure_ascii=False)
     json.dump(stats, open(os.path.join(outdir, 'stats.json'), 'w', encoding='utf8'), ensure_ascii=False)
+    json.dump({it['key']: shown for it, ps, moras, shown in jobs}, open(os.path.join(outdir, 'accent.json'), 'w', encoding='utf8'), ensure_ascii=False, indent=0)
     print('feito', len(index))
 
 if __name__ == '__main__':

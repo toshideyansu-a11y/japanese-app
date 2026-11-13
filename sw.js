@@ -1,5 +1,5 @@
 // Guarda os arquivos para o app funcionar sem internet.
-const CACHE = "nihongo-v3", AUDIO_CACHE = "nihongo-audio-v1";
+const CACHE = "nihongo-v3", AUDIO_CACHE = "nihongo-audio-v2";
 const FILES = ["./", "index.html", "css/app.css", "fonts/klee-one-600-sub.woff2", "manifest.json", "apple-touch-icon.png", "icon-192.png", "icon-512.png",
   "js/data/kanji.js", "js/data/words.js", "js/data/units.js", "js/data/stories.js", "js/data/strokes.js", "js/data/audio-index.js",
   "js/core.js", "js/sound.js", "js/mascot.js", "js/exercises.js", "js/session.js", "js/screens.js", "js/main.js"];
