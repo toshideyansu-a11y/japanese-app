@@ -1,9 +1,11 @@
+/* Letra estilo livro escolar (Klee One, recorte só com os caracteres usados) */
+@font-face { font-family: "Klee Kapi"; src: url("../fonts/klee-one-600-sub.woff2") format("woff2"); font-weight: 400 900; font-display: swap; }
 :root {
   --bg: #fff8ef; --bg2: #fff1e0; --card: #ffffff; --fg: #2f2a25; --muted: #8a7f73; --line: #eadfd0; --line2: #d9cab6;
   --blue: #2f7bf5; --green: #58b947; --red: #f0554e; --orange: #ff9a1f; --pink: #ffb7c5; --purple: #8e63e8; --teal: #19b5a5; --yellow: #ffd23f;
   --ink: #1d1a17; --shadow: 0 8px 24px rgba(120, 80, 30, .10);
   --round: ui-rounded, "SF Pro Rounded", "Hiragino Maru Gothic ProN", "Nunito", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
-  --kyo: "YuKyokasho Yoko", "YuKyokasho", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+  --kyo: "Klee Kapi", "YuKyokasho Yoko", "YuKyokasho", "Klee", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
   --safe-b: env(safe-area-inset-bottom, 0px); --safe-t: env(safe-area-inset-top, 0px);
 }
 @media (prefers-color-scheme: dark) {

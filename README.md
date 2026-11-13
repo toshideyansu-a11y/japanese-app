@@ -34,5 +34,6 @@ python tools/gen_audio.py manifest.json out   # 音声を生成(Kokoro のモデ
 
 ## クレジット
 - 漢字の書き順データ: [KanjiVG](https://kanjivg.tagaini.net) (c) Ulrich Apel, CC BY-SA 3.0
+- 漢字の表示書体: [Klee One](https://github.com/fontworks-fonts/Klee) (SIL OFL 1.1、使う文字だけを抜き出して収録)
 - 音声: [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) (Apache 2.0) で合成
 - 復習の計算: [FSRS](https://github.com/open-spaced-repetition/fsrs4anki)

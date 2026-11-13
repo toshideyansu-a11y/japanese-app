@@ -105,7 +105,7 @@ const SCREEN = {
       <div class="card"><p class="small muted" style="margin-bottom:10px">O progresso fica guardado neste aparelho. Faça uma cópia de vez em quando.</p>
         <div class="row"><button class="btn small ghost grow" data-act="export">Copiar backup</button><button class="btn small ghost grow" data-act="import">Restaurar</button></div>
         <button class="link small" style="color:var(--red);display:block;margin:10px auto 0" data-act="reset">Recomeçar do zero</button></div>
-      <p class="muted small center" style="margin-top:18px">Traços dos kanji: KanjiVG (CC BY-SA 3.0)<br>Vozes: geradas com Kokoro TTS (Apache 2.0)<br>Agendamento das revisões: FSRS</p>`;
+      <p class="muted small center" style="margin-top:18px">Traços dos kanji: KanjiVG (CC BY-SA 3.0)<br>Letra dos kanji: Klee One (SIL OFL)<br>Vozes: geradas com Kokoro TTS (Apache 2.0)<br>Agendamento das revisões: FSRS</p>`;
   },
 };
 
@@ -233,6 +233,7 @@ function resetSheet() {
 function onboarding() {
   const root = el('<div class="onb"></div>');
   document.body.append(root);
+  Sound.preload([sentAudio(GREETING)]);
   const standalone = window.navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
   const steps = [
     () => { root.innerHTML = `${kapi("wave")}<h1>Olá! Eu sou a Kapi <span class="jp">🍊</span></h1><p>Vou te ajudar com o japonês do dia a dia: mercado, escola, hospital, vizinhos. Um pouquinho por dia.</p><button class="btn" data-n>Vamos lá!</button>`; },

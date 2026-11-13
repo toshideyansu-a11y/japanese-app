@@ -11,10 +11,9 @@ const Sound = (() => {
 
   // WAV mudo curtinho, para "acordar" o elemento de áudio no primeiro toque
   const SIL = (() => {
-    const n = 800, b = new ArrayBuffer(44 + n), v = new DataView(b), w = (o, s) => [...s].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+    const n = 4410, b = new ArrayBuffer(44 + n), v = new DataView(b), w = (o, s) => [...s].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
     w(0, "RIFF"); v.setUint32(4, 36 + n, true); w(8, "WAVEfmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
-    v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, "data"); v.setUint32(40, n, true);
-    for (let i = 0; i < n; i++) v.setUint8(44 + i, 128);
+    v.setUint32(24, 22050, true); v.setUint32(28, 44100, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, "data"); v.setUint32(40, n, true);
     try { return URL.createObjectURL(new Blob([b], { type: "audio/wav" })); } catch (e) { return ""; }
   })();
 
@@ -43,7 +42,7 @@ const Sound = (() => {
       try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; u.lang = "ja-JP"; speechSynthesis.speak(u); } catch (e) { /* ok */ }
     }
   }
-  ["touchend", "pointerup", "click", "keydown"].forEach(ev => document.addEventListener(ev, unlock, { capture: true, passive: true }));
+  ["touchend", "click", "keydown"].forEach(ev => document.addEventListener(ev, unlock, { capture: true, passive: true }));
   document.addEventListener("visibilitychange", () => { if (!document.hidden && ctx && ctx.state !== "running") { try { ctx.resume().catch(() => {}); } catch (e) { /* ok */ } } });
 
   // ── Voz do aparelho (reserva e opção nos ajustes) ──
